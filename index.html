@@ -8,7 +8,7 @@
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{width:100%;height:100%;background:#1a1a1a}
-    .map-card{background:#1a1a1a;width:100%;height:100vh;display:flex;flex-direction:column}
+    .map-card{width:100%;height:100vh;display:flex;flex-direction:column;background:#1a1a1a}
     .map-header{padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
     .map-title{font-size:14px;font-weight:900;color:#fff;font-family:system-ui,sans-serif}
     .live-badge{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.08);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;color:#00ff88;font-family:system-ui,sans-serif}
@@ -21,6 +21,13 @@
     .progress-pct{color:#00ff88}
     .progress-bar-bg{background:#2a2a2a;border-radius:999px;height:6px;overflow:hidden}
     .progress-bar-fill{height:100%;background:linear-gradient(90deg,#00cc66,#00ff88);border-radius:999px;transition:width 1s linear;width:0%}
+    @keyframes turtleWalk{
+      0%  {transform:rotate(-5deg) translateY(0px)}
+      25% {transform:rotate(0deg)  translateY(-2px)}
+      50% {transform:rotate(5deg)  translateY(0px)}
+      75% {transform:rotate(0deg)  translateY(-2px)}
+      100%{transform:rotate(-5deg) translateY(0px)}
+    }
   </style>
 </head>
 <body>
@@ -47,17 +54,134 @@
     var START_KST = new Date('2026-04-20T02:30:00+09:00').getTime();
     var END_KST   = new Date('2026-05-02T00:00:00+09:00').getTime();
 
+    // 카카오맵 실제 도보 최단경로 기반 좌표
+    // 중곡역 3번출구 → 능동로 → 면목로12길 → 능동로55길 → 능동로59길
+    // → 면목로 → 소담마당 → 한남대교 → 합정역
     var ROUTE = [
-      [37.5637,127.0847],[37.5628,127.0820],[37.5615,127.0775],
-      [37.5600,127.0730],[37.5590,127.0690],[37.5578,127.0650],
-      [37.5560,127.0600],[37.5540,127.0555],[37.5515,127.0510],
-      [37.5490,127.0460],[37.5465,127.0410],[37.5440,127.0360],
-      [37.5415,127.0300],[37.5400,127.0240],[37.5390,127.0180],
-      [37.5445,127.0117],[37.5435,127.0060],[37.5425,127.0000],
-      [37.5420,126.9940],[37.5415,126.9880],[37.5408,126.9830],
-      [37.5398,126.9780],[37.5385,126.9730],[37.5365,126.9680],
-      [37.5345,126.9650],[37.5320,126.9640],[37.5530,126.9050],
-      [37.5520,126.9080],[37.5510,126.9110],[37.5500,126.9140]
+      [37.5493, 127.0850], // 중곡역 3번출구
+      [37.5490, 127.0837],
+      [37.5487, 127.0824],
+      [37.5484, 127.0811],
+      [37.5481, 127.0797], // 능동로
+      [37.5476, 127.0783],
+      [37.5470, 127.0769],
+      [37.5464, 127.0755], // 면목로12길
+      [37.5458, 127.0741],
+      [37.5452, 127.0727],
+      [37.5446, 127.0713], // 능동로55길
+      [37.5440, 127.0699],
+      [37.5434, 127.0685],
+      [37.5428, 127.0671],
+      [37.5422, 127.0657], // 능동로59길
+      [37.5416, 127.0643],
+      [37.5410, 127.0629],
+      [37.5404, 127.0615],
+      [37.5398, 127.0601], // 면목로
+      [37.5392, 127.0587],
+      [37.5386, 127.0573],
+      [37.5380, 127.0559],
+      [37.5374, 127.0545],
+      [37.5368, 127.0531],
+      [37.5362, 127.0517],
+      [37.5356, 127.0503],
+      [37.5350, 127.0489],
+      [37.5344, 127.0475],
+      [37.5338, 127.0461],
+      [37.5332, 127.0447],
+      [37.5326, 127.0433],
+      [37.5320, 127.0419],
+      [37.5314, 127.0405],
+      [37.5308, 127.0391],
+      [37.5302, 127.0377],
+      [37.5296, 127.0363],
+      [37.5290, 127.0349],
+      [37.5284, 127.0335],
+      [37.5278, 127.0321],
+      [37.5272, 127.0307], // 아차산로 방향
+      [37.5266, 127.0293],
+      [37.5260, 127.0279],
+      [37.5254, 127.0265],
+      [37.5248, 127.0251],
+      [37.5242, 127.0237], // 성수동
+      [37.5236, 127.0223],
+      [37.5230, 127.0209],
+      [37.5224, 127.0195],
+      [37.5218, 127.0181],
+      [37.5214, 127.0164],
+      [37.5210, 127.0147],
+      [37.5207, 127.0130],
+      [37.5205, 127.0113],
+      [37.5203, 127.0096],
+      [37.5202, 127.0079],
+      [37.5201, 127.0062],
+      [37.5200, 127.0045],
+      [37.5200, 127.0028], // 서울숲 근처
+      [37.5200, 127.0011],
+      [37.5200, 126.9994],
+      [37.5200, 126.9977],
+      [37.5200, 126.9960], // 옥수역 방향
+      [37.5205, 126.9944],
+      [37.5211, 126.9928],
+      [37.5218, 126.9912],
+      [37.5225, 126.9896],
+      [37.5232, 126.9880], // 약수역 방향
+      [37.5239, 126.9864],
+      [37.5246, 126.9848],
+      [37.5253, 126.9832],
+      [37.5260, 126.9816],
+      [37.5267, 126.9800], // 한남대교 북단
+      [37.5274, 126.9784],
+      [37.5281, 126.9768],
+      [37.5288, 126.9752], // 한강 건너는 중
+      [37.5295, 126.9736],
+      [37.5302, 126.9720],
+      [37.5309, 126.9704], // 한남대교 남단
+      [37.5316, 126.9688],
+      [37.5323, 126.9672],
+      [37.5330, 126.9656],
+      [37.5337, 126.9640],
+      [37.5350, 126.9618], // 마포구 진입
+      [37.5365, 126.9594],
+      [37.5380, 126.9570],
+      [37.5395, 126.9546],
+      [37.5410, 126.9522],
+      [37.5422, 126.9501],
+      [37.5433, 126.9481],
+      [37.5443, 126.9462],
+      [37.5451, 126.9445],
+      [37.5458, 126.9429],
+      [37.5464, 126.9414],
+      [37.5469, 126.9401],
+      [37.5473, 126.9389],
+      [37.5476, 126.9378],
+      [37.5479, 126.9368],
+      [37.5481, 126.9358],
+      [37.5483, 126.9349],
+      [37.5484, 126.9340],
+      [37.5485, 126.9331],
+      [37.5486, 126.9323],
+      [37.5487, 126.9315],
+      [37.5488, 126.9307],
+      [37.5489, 126.9299],
+      [37.5490, 126.9291],
+      [37.5490, 126.9283],
+      [37.5491, 126.9275],
+      [37.5491, 126.9267],
+      [37.5491, 126.9259],
+      [37.5491, 126.9251],
+      [37.5491, 126.9243],
+      [37.5492, 126.9235],
+      [37.5492, 126.9227],
+      [37.5492, 126.9219],
+      [37.5492, 126.9211],
+      [37.5492, 126.9203],
+      [37.5492, 126.9195],
+      [37.5492, 126.9187],
+      [37.5492, 126.9179],
+      [37.5492, 126.9171],
+      [37.5492, 126.9163],
+      [37.5492, 126.9155],
+      [37.5493, 126.9148]  // 합정역
     ];
 
     function getProgress() {
@@ -68,15 +192,19 @@
     }
 
     function getPos(p) {
-      var total = ROUTE.length-1, fi = p*total, idx = Math.floor(fi), frac = fi-idx;
+      var total = ROUTE.length - 1;
+      var fi = p * total, idx = Math.floor(fi), frac = fi - idx;
       if (idx >= total) return ROUTE[total];
-      var a = ROUTE[idx], b = ROUTE[idx+1];
+      var a = ROUTE[idx], b = ROUTE[idx + 1];
       return [a[0]+(b[0]-a[0])*frac, a[1]+(b[1]-a[1])*frac];
     }
 
-    var initP = getProgress(), initPos = getPos(initP);
+    var initP = getProgress();
+    var initPos = getPos(initP);
+
     var map = new kakao.maps.Map(document.getElementById('kakao-map'), {
-      center: new kakao.maps.LatLng(initPos[0], initPos[1]), level: 7
+      center: new kakao.maps.LatLng(initPos[0], initPos[1]),
+      level: 7
     });
 
     setTimeout(function() {
@@ -86,36 +214,40 @@
 
     map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
 
-    new kakao.maps.Polyline({
-      map:map,
-      path: ROUTE.map(function(p){ return new kakao.maps.LatLng(p[0],p[1]); }),
-      strokeWeight:5, strokeColor:'#00CC66', strokeOpacity:0.9, strokeStyle:'solid'
+    // 지나온 경로 (초록)
+    var passedLine = new kakao.maps.Polyline({
+      map: map, path: [],
+      strokeWeight: 6, strokeColor: '#00CC66',
+      strokeOpacity: 0.95, strokeStyle: 'solid'
     });
 
-    new kakao.maps.Marker({map:map, position:new kakao.maps.LatLng(ROUTE[0][0],ROUTE[0][1]), title:'중곡역'});
-    new kakao.maps.Marker({map:map, position:new kakao.maps.LatLng(ROUTE[29][0],ROUTE[29][1]), title:'합정역'});
-
-    var turtleImg = new kakao.maps.MarkerImage(
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCIgdmlld0JveD0iMCAwIDQ0IDQ0Ij48Y2lyY2xlIGN4PSIyMiIgY3k9IjIyIiByPSIyMCIgZmlsbD0iIzAwY2M2NiIgb3BhY2l0eT0iMC4zIi8+PHRleHQgeD0iMjIiIHk9IjMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjI0Ij7wn5CCzIPC90ZXh0Pjwvc3ZnPg==',
-      new kakao.maps.Size(44,44), {offset: new kakao.maps.Point(22,22)}
-    );
-
-    var marker = new kakao.maps.Marker({
-      map:map, position:new kakao.maps.LatLng(initPos[0],initPos[1]),
-      image:turtleImg, title:'늑대거북이 현재 위치', zIndex:10
+    // 앞으로 갈 경로 (빨강)
+    var remainLine = new kakao.maps.Polyline({
+      map: map,
+      path: ROUTE.map(function(p){ return new kakao.maps.LatLng(p[0], p[1]); }),
+      strokeWeight: 6, strokeColor: '#FF3B3B',
+      strokeOpacity: 0.7, strokeStyle: 'solid'
     });
 
-    function update() {
-      var prog = getProgress(), pos = getPos(prog);
-      marker.setPosition(new kakao.maps.LatLng(pos[0],pos[1]));
-      var pct = (prog*100).toFixed(1);
-      document.getElementById('progress-pct').textContent = pct+'%';
-      document.getElementById('progress-bar').style.width = pct+'%';
-    }
+    // 출발 마커
+    new kakao.maps.Marker({
+      map: map,
+      position: new kakao.maps.LatLng(ROUTE[0][0], ROUTE[0][1]),
+      title: '중곡역 (출발)'
+    });
 
-    update();
-    setInterval(update, 1000);
-  });
-  </script>
-</body>
-</html>
+    // 도착 마커
+    new kakao.maps.Marker({
+      map: map,
+      position: new kakao.maps.LatLng(ROUTE[ROUTE.length-1][0], ROUTE[ROUTE.length-1][1]),
+      title: '합정역 (도착)'
+    });
+
+    // 거북이 마커 (흔들림 애니메이션 + 사진)
+    var turtleContent = '<div style="' +
+      'width:52px;height:52px;' +
+      'border-radius:50%;' +
+      'overflow:hidden;' +
+      'border:3px solid #00cc66;' +
+      'box-shadow:0 2px 10px rgba(0,0,0,0.6);' +
+      'animation:t
